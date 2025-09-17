@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Header Analysis 1.4</title>
+    <title>Email Header Analysis 1.5</title>
     <style>
         /* General styling for the game environment */
         body {
@@ -207,7 +207,7 @@
 <body>
 
 <div class="game-container" id="start-screen">
-    <h1>Email Header Analysis 1.4</h1>
+    <h1>Email Header Analysis 1.5</h1>
     <div class="subheader">Analyze email headers to identify threats.</div>
     <p>Welcome! Your task is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
     <p>Pay close attention to clues like **mismatched domains**, **suspicious IPs**, and **SPF/DKIM/DMARC results**. There are 10 emails in total. Can you get a perfect score?</p>
@@ -423,6 +423,7 @@
     const finalScoreKey = 'emailAnalysisFinalScore';
     const finalMiniScoreKey = 'emailAnalysisMiniScore';
     const finalCongratsKey = 'emailAnalysisCongratsMsg';
+    const completionKey = 'emailAnalysisCompleted';
     let currentEmailIndex = 0;
     let score = 0;
     let miniChallengeIndex = 0;
@@ -524,9 +525,20 @@
     function checkPreviousScore() {
         const storedScore = localStorage.getItem(finalScoreKey);
         const storedMiniScore = localStorage.getItem(finalMiniScoreKey);
-        const storedCongrats = localStorage.getItem(finalCongratsKey);
-        if (storedScore !== null && storedMiniScore !== null) {
-            endGame(parseInt(storedScore), parseInt(storedMiniScore), storedCongrats, true);
+        const isCompleted = localStorage.getItem(completionKey) === 'true';
+
+        if (isCompleted) {
+            endGame(parseInt(storedScore), parseInt(storedMiniScore), true, true);
+        } else if (storedScore !== null) {
+            // User completed main game, but not mini challenge
+            startGame();
+            showScreen(gameOverScreen);
+            document.querySelector('#game-over h2').textContent = 'Mini-Challenge Awaits';
+            document.querySelector('.score-info').textContent = `You correctly identified ${storedScore} out of 10 emails.`;
+            document.querySelector('.debrief').style.display = 'block';
+            startMiniChallengeBtn.style.display = 'block';
+            goToCanvasBtn.style.display = 'block';
+            finalGradeContainer.style.display = 'none';
         }
     }
 
@@ -584,22 +596,46 @@
         presentEmail();
     }
 
-    function endGame(storedScore = null, storedMiniScore = null, storedCongrats = null, returningUser = false) {
+    function endGame(finalMainScore = null, finalMiniScore = null, isCompleted = false, returningUser = false) {
         showScreen(gameOverScreen);
-        const finalMainScore = storedScore !== null ? storedScore : score;
-        const finalMiniScore = storedMiniScore !== null ? storedMiniScore : miniScore;
-        const totalScore = finalMainScore + finalMiniScore;
-        const finalGrade = calculateGrade(totalScore);
+        
+        const mainScore = finalMainScore !== null ? finalMainScore : score;
+        const miniScore = finalMiniScore !== null ? finalMiniScore : 0; // Mini-challenge hasn't started yet if not a returning user
 
-        if (returningUser) {
-            congratsMsg.textContent = storedCongrats;
-            document.querySelector('#game-over h2').textContent = 'Previous Session Complete';
-            document.querySelector('.score-info').textContent = `You correctly identified ${finalMainScore} out of 10 emails.`;
+        let congratsText = '';
+        if (isCompleted) {
+            const totalScore = mainScore + miniScore;
+            const finalGrade = calculateGrade(totalScore);
+
+            congratsText = `Congratulations, you've completed all challenges!`;
+            document.querySelector('#game-over h2').textContent = 'Analysis Complete';
+            document.querySelector('.score-info').textContent = `You correctly identified ${mainScore} out of 10 emails. Your Mini-Challenge score was ${miniScore} out of 5.`;
             document.querySelector('.debrief').style.display = 'none';
             startMiniChallengeBtn.style.display = 'none';
-            goToCanvasBtn.style.display = 'none';
+            goToCanvasBtn.style.display = 'block';
+            finalGradeContainer.style.display = 'block';
+            finalGradeDisplay.textContent = finalGrade;
+            // Save completion status
+            localStorage.setItem(completionKey, 'true');
+
+        } else if (returningUser) {
+            // This is for a user who completed the full game, and came back later
+            const totalScore = mainScore + miniScore;
+            const finalGrade = calculateGrade(totalScore);
+
+            congratsText = 'You have already completed this analysis.';
+            document.querySelector('#game-over h2').textContent = 'Previous Session Complete';
+            document.querySelector('.score-info').textContent = `You correctly identified ${mainScore} out of 10 emails. Your Mini-Challenge score was ${miniScore} out of 5.`;
+            document.querySelector('.debrief').style.display = 'none';
+            startMiniChallengeBtn.style.display = 'none';
+            goToCanvasBtn.style.display = 'block';
+            finalGradeContainer.style.display = 'block';
+            finalGradeDisplay.textContent = finalGrade;
         } else {
-            let congratsText = '';
+            // User just finished the main game and is now presented with the option to start the mini-challenge
+            const totalScore = mainScore + miniScore;
+            const finalGrade = calculateGrade(totalScore);
+            
             if (finalGrade === 'A') {
                 congratsText = 'Outstanding! You are a master analyst! 🏆';
             } else if (finalGrade === 'B' || finalGrade === 'C') {
@@ -607,20 +643,19 @@
             } else {
                 congratsText = 'Good effort! Keep practicing, and you\'ll spot those threats in no time. 💪';
             }
-            congratsMsg.textContent = congratsText;
+            
             document.querySelector('#game-over h2').textContent = 'Analysis Debriefing';
-            document.querySelector('.score-info').textContent = `You correctly identified ${finalMainScore} out of 10 emails.`;
+            document.querySelector('.score-info').textContent = `You correctly identified ${mainScore} out of 10 emails.`;
             document.querySelector('.debrief').style.display = 'block';
             startMiniChallengeBtn.style.display = 'block';
             goToCanvasBtn.style.display = 'block';
-            // Save the scores for the next visit
-            localStorage.setItem(finalScoreKey, finalMainScore);
-            localStorage.setItem(finalMiniScoreKey, finalMiniScore);
+            finalGradeContainer.style.display = 'none'; // Hide grade until both parts are done
+            
+            // Save the main game score for the next step (mini-challenge)
+            localStorage.setItem(finalScoreKey, mainScore);
             localStorage.setItem(finalCongratsKey, congratsText);
         }
-
-        finalGradeContainer.style.display = 'block';
-        finalGradeDisplay.textContent = finalGrade;
+        congratsMsg.textContent = congratsText;
     }
 
     function startMiniChallenge() {
@@ -657,8 +692,10 @@
             miniResultDisplay.textContent = '';
             miniContinueBtnContainer.style.display = 'none';
         } else {
-            // Mini-challenge complete, return to the game over screen
-            endGame();
+            // Mini-challenge complete, return to the final screen
+            const mainScore = parseInt(localStorage.getItem(finalScoreKey) || 0);
+            localStorage.setItem(finalMiniScoreKey, miniScore); // Save mini-score
+            endGame(mainScore, miniScore, true); // Pass scores and completion status
         }
     }
 
@@ -693,20 +730,16 @@
         localStorage.removeItem(finalScoreKey);
         localStorage.removeItem(finalMiniScoreKey);
         localStorage.removeItem(finalCongratsKey);
+        localStorage.removeItem(completionKey);
         window.location.reload(); // Reload the page to start over
     }
 
     // New keyboard event listener for the backdoor
     window.addEventListener('keydown', (event) => {
         const key = event.key.toLowerCase();
-        if (key === 'p' || key === 'c') {
-            lastKeys += key;
-            if (lastKeys.slice(-resetKeySequence.length) === resetKeySequence) {
-                restartGameBackdoor();
-            }
-        } else {
-            // Reset the sequence if any other key is pressed
-            lastKeys = '';
+        lastKeys += key;
+        if (lastKeys.slice(-resetKeySequence.length) === resetKeySequence) {
+            restartGameBackdoor();
         }
     });
 
