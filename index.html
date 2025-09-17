@@ -54,6 +54,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
         }
         .mini-challenge-container h3 {
             margin-top: 0;
@@ -157,6 +158,21 @@
             color: #ffc107;
             margin-top: 0;
         }
+        .canvas-button {
+            background-color: #E24A22; /* Canvas's brand color */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 25px;
+        }
+        .canvas-button:hover {
+            background-color: #cf3d15;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -201,6 +217,7 @@
             </ul>
         </div>
         <button id="start-mini-challenge" style="margin-top: 25px;">Start Mini-Challenge: Spot the Red Flag</button>
+        <button id="go-to-canvas" class="canvas-button">Go to Canvas Discussion</button>
     </div>
 </div>
 
@@ -209,7 +226,9 @@
         <h2>Mini-Challenge: Spot the Red Flag</h2>
         <p>Quickly identify the most suspicious indicator in each email header. We're on a tight schedule!</p>
         <div id="challenge-email-display"></div>
-        <button id="next-challenge-email">Next Email</button>
+        <input type="text" id="red-flag-input" class="red-flag-input" placeholder="Type your guess here...">
+        <button id="check-answer-btn">Check My Answer</button>
+        <div id="mini-result-display" style="margin-top: 10px;"></div>
         <p style="margin-top: 15px;">**Final score:** <span id="mini-score">0</span> / 5</p>
     </div>
 </div>
@@ -352,6 +371,7 @@
     const miniChallengeScreen = document.getElementById('mini-challenge-screen');
     const startGameBtn = document.getElementById('start-game');
     const startMiniChallengeBtn = document.getElementById('start-mini-challenge');
+    const goToCanvasBtn = document.getElementById('go-to-canvas');
     const emailDisplay = document.getElementById('email-display');
     const emailNumberSpan = document.getElementById('email-number');
     const verdictButtons = document.querySelector('.verdict-buttons');
@@ -361,13 +381,19 @@
     const continueBtnContainer = document.querySelector('.continue-btn-container');
     const continueBtn = document.getElementById('continue-game');
     const challengeEmailDisplay = document.getElementById('challenge-email-display');
-    const nextChallengeEmailBtn = document.getElementById('next-challenge-email');
+    const redFlagInput = document.getElementById('red-flag-input');
+    const checkAnswerBtn = document.getElementById('check-answer-btn');
+    const miniResultDisplay = document.getElementById('mini-result-display');
     const miniScoreSpan = document.getElementById('mini-score');
 
     let currentEmailIndex = 0;
     let score = 0;
     let miniChallengeIndex = 0;
     let miniScore = 0;
+
+    // >>>>>>>>> PASTE YOUR CANVAS DISCUSSION URL HERE <<<<<<<<<<<
+    // Example: const canvasUrl = 'https://canvas.instructure.com/courses/12345/discussion_topics/67890';
+    const canvasUrl = 'YOUR_CANVAS_DISCUSSION_URL_GOES_HERE';
 
     const miniChallengeEmails = [
         {
@@ -500,4 +526,62 @@
             challengeEmailDisplay.innerHTML = `
                 <h3>Email Header ${miniChallengeIndex + 1}</h3>
                 <p><strong>From:</strong> ${email.from}</p>
-                <p
+                <p><strong>Subject:</strong> ${email.subject}</p>
+                <p><strong>Received:</strong> ${email.received}</p>
+                ${email.attachment ? `<p><strong>Attachment:</strong> ${email.attachment}</p>` : ''}
+                ${email.spf ? `<p><strong>SPF:</strong> ${email.spf}</p>` : ''}
+                ${email.dkim ? `<p><strong>DKIM:</strong> ${email.dkim}</p>` : ''}
+                ${email.dmarc ? `<p><strong>DMARC:</strong> ${email.dmarc}</p>` : ''}
+                ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
+                <p style="margin-top: 15px;">**What's the red flag?**</p>
+            `;
+            redFlagInput.value = '';
+            redFlagInput.style.display = 'block';
+            checkAnswerBtn.style.display = 'block';
+            checkAnswerBtn.textContent = 'Check My Answer';
+            miniResultDisplay.textContent = '';
+        } else {
+            challengeEmailDisplay.innerHTML = `<h3>Challenge Complete!</h3><p>Return to the main screen to continue your learning journey.</p>`;
+            redFlagInput.style.display = 'none';
+            checkAnswerBtn.style.display = 'none';
+        }
+    }
+    
+    function handleCheckAnswer() {
+        const email = miniChallengeEmails[miniChallengeIndex];
+        const userAnswer = redFlagInput.value.trim().toLowerCase();
+        const correctIoc = email.ioc.toLowerCase();
+
+        miniResultDisplay.innerHTML = `
+            <p><strong>The red flag was:</strong> ${email.ioc}</p>
+        `;
+
+        // The user can check their own answer against the correct one
+        checkAnswerBtn.textContent = 'Next Email';
+        checkAnswerBtn.onclick = handleNextMiniChallenge;
+    }
+
+    function handleNextMiniChallenge() {
+        miniChallengeIndex++;
+        presentMiniChallengeEmail();
+    }
+
+    function goToCanvas() {
+        if (canvasUrl && canvasUrl !== 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811?module_item_id=1766087') {
+            window.open(canvasUrl, '_blank');
+        } else {
+            alert('Please configure the Canvas URL in the code first!');
+        }
+    }
+
+    // Set up event listeners
+    startGameBtn.addEventListener('click', startGame);
+    verdictButtons.addEventListener('click', handleVerdict);
+    continueBtn.addEventListener('click', continueGame);
+    startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
+    checkAnswerBtn.addEventListener('click', handleCheckAnswer);
+    goToCanvasBtn.addEventListener('click', goToCanvas);
+</script>
+
+</body>
+</html>
