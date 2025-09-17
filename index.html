@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Detective Challenge</title>
+    <style>
+        /* General styling for the game environment */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            background-color: #2a2a4a;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            box-sizing: border-box;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            color: #ffc107;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        .subheader {
+            color: #bbb;
+            font-style: italic;
+            margin-bottom: 25px;
+        }
+        .game-screen-layout {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+        .mini-challenge-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .mini-challenge-container h3 {
+            margin-top: 0;
+        }
+        .red-flag-input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #1c1c2e;
+            color: white;
+            margin-bottom: 10px;
+        }
+        /* Styling for all non-square buttons */
+        button {
+            background-color: #3f72af;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #1c528e;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        /* Styling for the verdict button container to make them stack vertically */
+        .verdict-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .verdict-buttons button {
+            width: 100px;
+            height: 100px;
+        }
+        /* Specific colors for verdict buttons */
+        .verdict-buttons button.safe { background-color: #4CAF50; }
+        .verdict-buttons button.suspicious { background-color: #ff9800; }
+        .verdict-buttons button.malicious { background-color: #f44336; }
+        .verdict-buttons button.safe:hover { background-color: #45a049; }
+        .verdict-buttons button.suspicious:hover { background-color: #e68a00; }
+        .verdict-buttons button.malicious:hover { background-color: #d32f2f; }
+        
+        /* Styling for the email header display area */
+        #email-display {
+            background-color: #1c1c2e;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        #email-display h3 {
+            color: #ffc107;
+            margin-top: 0;
+            border-bottom: 2px solid #ffc107;
+            padding-bottom: 5px;
+        }
+        /* Feedback message styling */
+        #result-display {
+            margin-top: 20px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .correct { color: #4CAF50; }
+        .incorrect { color: #f44336; }
+        .continue-btn-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        /* Game Over screen styling */
+        #game-over {
+            margin-top: 25px;
+            text-align: center;
+        }
+        #game-over h2 {
+            color: #ffc107;
+            font-size: 2em;
+        }
+        .score-info {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+        .debrief {
+            background-color: #1c1c2e;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        .debrief h3 {
+            color: #ffc107;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="start-screen">
+    <h1>Email Detective Challenge</h1>
+    <div class="subheader">Analyze email headers to identify threats.</div>
+    <p>Welcome, Detective! Your mission is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
+    <p>Pay close attention to clues like **mismatched domains**, **suspicious IPs**, and **SPF/DKIM/DMARC results**. There are 10 emails in total. Can you get a perfect score?</p>
+    <button id="start-game">Start Mission</button>
+</div>
+
+<div class="game-container" id="game-screen" style="display: none;">
+    <div class="subheader">Email <span id="email-number"></span> of 10</div>
+    <div class="game-screen-layout">
+        <div id="email-display"></div>
+        <div class="verdict-buttons">
+            <button class="safe" data-verdict="Safe">Safe</button>
+            <button class="suspicious" data-verdict="Suspicious">Suspicious</button>
+            <button class="malicious" data-verdict="Malicious">Malicious</button>
+        </div>
+    </div>
+    <div id="result-display"></div>
+    <div class="continue-btn-container" style="display: none;">
+        <button id="continue-game">Continue</button>
+    </div>
+</div>
+
+<div class="game-container" id="game-over-screen" style="display: none;">
+    <div id="game-over">
+        <h2>Mission Debriefing</h2>
+        <p class="score-info">You correctly identified <span id="final-score">0</span> out of 10 emails.</p>
+        <p id="congrats"></p>
+        <div class="debrief">
+            <h3>Final Notes for Your Report</h3>
+            <p>Your work is not done yet! Now, head over to the **Canvas discussion board** to collaborate with your fellow detectives.</p>
+            <p><strong>Prompts for your post:</strong></p>
+            <ul>
+                <li>Which email was the most difficult to analyze? Why?</li>
+                <li>Share an IoC you found that you think others might have missed.</li>
+                <li>How could you verify an email's legitimacy if it seemed "Suspicious" but not outright "Malicious"?</li>
+            </ul>
+        </div>
+        <button id="start-mini-challenge" style="margin-top: 25px;">Start Mini-Challenge: Spot the Red Flag</button>
+    </div>
+</div>
+
+<div class="game-container" id="mini-challenge-screen" style="display: none;">
+    <div class="mini-challenge-container">
+        <h2>Mini-Challenge: Spot the Red Flag</h2>
+        <p>Quickly identify the most suspicious indicator in each email header. We're on a tight schedule!</p>
+        <div id="challenge-email-display"></div>
+        <button id="next-challenge-email">Next Email</button>
+        <p style="margin-top: 15px;">**Final score:** <span id="mini-score">0</span> / 5</p>
+    </div>
+</div>
+
+<script>
+    // Our collection of email cases to investigate
+    const emails = [
+        {
+            id: 1,
+            from: 'newsletter@trustedcompany.com',
+            to: 'student@example.edu',
+            subject: 'Your Weekly Update',
+            received: 'from mail.trustedcompany.com (mail.trustedcompany.com [192.168.10.5])',
+            spf: 'pass',
+            dkim: 'pass',
+            dmarc: 'pass',
+            verdict: 'Safe',
+            ioc: 'No red flags here. This email looks legitimate. The IP is a private address, common for internal networks, and all authentication checks pass. Trust it.',
+        },
+        {
+            id: 2,
+            from: 'banksecurity@securebank.com',
+            to: 'student@example.edu',
+            subject: 'Account Verification Required',
+            replyTo: 'attacker@gmail.com',
+            received: 'from unknown (malicious.com [203.0.113.55])',
+            spf: 'fail',
+            dkim: 'fail',
+            dmarc: 'fail',
+            verdict: 'Malicious',
+            ioc: 'Major alert! The Reply-To address is completely different and suspicious (attacker@gmail.com). All the critical authentication checks (SPF/DKIM/DMARC) failed, and the source IP is untrusted. Definitely a phishing attempt.',
+        },
+        {
+            id: 3,
+            from: 'updates@softwarecorp.com',
+            to: 'student@example.edu',
+            subject: 'Important Security Patch',
+            received: 'from mail.softwarecorp.com (mail.softwarecorp.com [198.51.100.10])',
+            spf: 'pass',
+            dkim: 'pass',
+            dmarc: 'pass',
+            body: 'Body contains link: http://malicious-download.com/update.exe',
+            verdict: 'Malicious',
+            ioc: 'Tricky one! The headers look good, but the *body* of the email contains a link to a very suspicious domain (malicious-download.com). This is a classic "spear-phishing" tactic where legitimate-looking emails hide dangerous links.',
+        },
+        {
+            id: 4,
+            from: 'jane.doe@student.example.edu',
+            to: 'student@example.edu',
+            subject: 'Check this out!',
+            received: 'from compromisedpc.local (unknown [203.0.113.200])',
+            spf: 'fail',
+            dkim: 'none',
+            dmarc: 'fail',
+            attachment: 'funnyvideo.exe',
+            verdict: 'Malicious',
+            ioc: 'All hands on deck! Multiple red flags: failed SPF/DKIM/DMARC, a clearly suspicious host/IP ([203.0.113.200]), and an executable file (.exe) attached from an unexpected sender. This screams malware.',
+        },
+        {
+            id: 5,
+            from: 'hr@company.edu',
+            to: 'student@example.edu',
+            subject: 'HR Policy Update',
+            received: 'from relay.company.edu (relay.company.edu [198.51.100.50])',
+            spf: 'softfail',
+            dkim: 'pass',
+            dmarc: 'pass',
+            verdict: 'Suspicious',
+            ioc: 'Proceed with caution. The SPF record showed a "softfail." While DKIM and DMARC passed, a softfail suggests the email *might* be legitimate but is coming from a server not explicitly authorized, or there\'s a configuration issue. It\'s not outright malicious, but it definitely deserves a closer look or a warning label.',
+        },
+        {
+            id: 6,
+            from: 'support@amznon.com',
+            to: 'student@example.edu',
+            subject: 'Your order has been shipped',
+            received: 'from server.amznon.com (server.amznon.com [104.20.10.15])',
+            spf: 'fail',
+            dkim: 'fail',
+            dmarc: 'fail',
+            body: 'Body contains link: https://amznon.com/track-order',
+            verdict: 'Malicious',
+            ioc: 'This is a **typosquatting** attack. The domain is a common misspelling of a legitimate site ("amznon" instead of "amazon"). This, combined with the failed authentication, is a major red flag.',
+        },
+        {
+            id: 7,
+            from: 'noreply@student.example.edu',
+            to: 'student@example.edu',
+            subject: 'New Shared Document',
+            received: 'from gdocs.co (gdocs.co [192.168.1.100])',
+            spf: 'fail',
+            dkim: 'fail',
+            dmarc: 'fail',
+            body: 'You have a new document shared with you on Google Docs. View now: https://gdocs.co/view-document-d1234',
+            verdict: 'Malicious',
+            ioc: 'The "From" address is legitimate-looking, but the email source (`gdocs.co`) and the link in the body are not from Google. This is a classic credential harvesting attempt.',
+        },
+        {
+            id: 8,
+            from: 'j.smith@trustedcompany.com',
+            to: 'finance@trustedcompany.com',
+            subject: 'URGENT: Change in wire transfer details',
+            replyTo: 'j.smith@trustedcompany.co.uk',
+            received: 'from new-server.trustedcompany.com ([203.0.113.201])',
+            spf: 'pass',
+            dkim: 'fail',
+            dmarc: 'fail',
+            verdict: 'Suspicious',
+            ioc: 'The **DKIM/DMARC failures** and the **Reply-To** domain (`.co.uk` instead of `.com`) are suspicious. This could be a **Business Email Compromise (BEC)** attempt. While the `from` address looks okay, the discrepancies indicate a possible spoof or a redirect to a malicious actor.',
+        },
+        {
+            id: 9,
+            from: 'jake@student.example.edu',
+            to: 'student@example.edu',
+            subject: 'Check out my new project!',
+            received: 'from mail.example.edu ([192.0.2.5])',
+            spf: 'pass',
+            dkim: 'pass',
+            dmarc: 'pass',
+            attachment: 'project-notes.zip',
+            verdict: 'Suspicious',
+            ioc: 'The email headers pass all checks, making it appear safe, but the attachment is a compressed `.zip` file from a student. This is a common way to hide malicious executables. It warrants suspicion.',
+        },
+        {
+            id: 10,
+            from: 'ceo@trustedcompany.com',
+            to: 'finance@trustedcompany.com',
+            subject: 'Quick question about payment',
+            received: 'from [198.51.100.200] (static-ip.example.net)',
+            spf: 'fail',
+            dkim: 'fail',
+            dmarc: 'fail',
+            verdict: 'Malicious',
+            ioc: 'This is a **whaling attack**, a targeted phishing attempt on a high-level employee. The sender's domain is spoofed, and the IP address is generic and fails all authentication checks. The subject line creates a sense of urgency to bypass scrutiny.',
+        },
+    ];
+
+    const startScreen = document.getElementById('start-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const miniChallengeScreen = document.getElementById('mini-challenge-screen');
+    const startGameBtn = document.getElementById('start-game');
+    const restartGameBtn = document.getElementById('restart-game');
+    const startMiniChallengeBtn = document.getElementById('start-mini-challenge');
+    const emailDisplay = document.getElementById('email-display');
+    const emailNumberSpan = document.getElementById('email-number');
+    const verdictButtons = document.querySelector('.verdict-buttons');
+    const resultDisplay = document.getElementById('result-display');
+    const finalScoreSpan = document.getElementById('final-score');
+    const congratsMsg = document.getElementById('congrats');
+    const continueBtnContainer = document.querySelector('.continue-btn-container');
+    const continueBtn = document.getElementById('continue-game');
+    const challengeEmailDisplay = document.getElementById('challenge-email-display');
+    const nextChallengeEmailBtn = document.getElementById('next-challenge-email');
+    const miniScoreSpan = document.getElementById('mini-score');
+
+    let currentEmailIndex = 0;
+    let score = 0;
+    let miniChallengeIndex = 0;
+    let miniScore = 0;
+
+    const miniChallengeEmails = [
+        {
+            id: 1,
+            from: 'mail@microsoft.co',
+            subject: 'Important Update',
+            received: 'from mail.malicious-server.net',
+            ioc: 'typosquatting on the domain and a suspicious source server.',
+        },
+        {
+            id: 2,
+            from: 'no-reply@mybank.com',
+            subject: 'Account Locked',
+            received: 'from [127.0.0.1]',
+            attachment: 'statement.exe',
+            ioc: 'The `.exe` attachment is the red flag, often used to hide malware.',
+        },
+        {
+            id: 3,
+            from: 'jane.smith@trustedcompany.com',
+            subject: 'URGENT: Invoice #98765',
+            replyTo: 'jane.smith@yahoo.com',
+            ioc: 'The `Reply-To` address is a common personal email, which is highly unusual for a business invoice.',
+        },
+        {
+            id: 4,
+            from: 'support@paypal.com',
+            subject: 'Payment Cancelled',
+            spf: 'fail',
+            dkim: 'fail',
+            dmarc: 'fail',
+            ioc: 'All authentication checks (SPF/DKIM/DMARC) have failed, indicating the email is a spoof.',
+        },
+        {
+            id: 5,
+            from: 'helpdesk@company.com',
+            subject: 'System Maintenance',
+            received: 'from remote-server.local ([203.0.113.100])',
+            body: 'Click here for details: http://bit.ly/12345',
+            ioc: 'The link using a URL shortener (`bit.ly`) and the suspicious IP address are major clues.',
+        },
+    ];
+
+    function showScreen(screenToShow) {
+        startScreen.style.display = 'none';
+        gameScreen.style.display = 'none';
+        gameOverScreen.style.display = 'none';
+        miniChallengeScreen.style.display = 'none';
+        screenToShow.style.display = 'flex';
+    }
+
+    function startGame() {
+        currentEmailIndex = 0;
+        score = 0;
+        showScreen(gameScreen);
+        presentEmail();
+    }
+
+    function presentEmail() {
+        if (currentEmailIndex < emails.length) {
+            const email = emails[currentEmailIndex];
+            emailNumberSpan.textContent = currentEmailIndex + 1;
+            emailDisplay.innerHTML = `
+                <h3>Email ${email.id}</h3>
+                <p><strong>From:</strong> ${email.from}</p>
+                <p><strong>To:</strong> ${email.to}</p>
+                <p><strong>Subject:</strong> ${email.subject}</p>
+                ${email.replyTo ? `<p><strong>Reply-To:</strong> ${email.replyTo}</p>` : ''}
+                <p><strong>Received:</strong> ${email.received}</p>
+                <p><strong>SPF:</strong> ${email.spf}</p>
+                <p><strong>DKIM:</strong> ${email.dkim}</p>
+                <p><strong>DMARC:</strong> ${email.dmarc}</p>
+                ${email.attachment ? `<p><strong>Attachment:</strong> ${email.attachment}</p>` : ''}
+                ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
+            `;
+            resultDisplay.textContent = '';
+            verdictButtons.style.display = 'flex';
+            continueBtnContainer.style.display = 'none';
+        } else {
+            endGame();
+        }
+    }
+
+    function handleVerdict(event) {
+        if (!event.target.dataset.verdict) return;
+        const selectedVerdict = event.target.dataset.verdict;
+        const correctVerdict = emails[currentEmailIndex].verdict;
+        const iocExplanation = emails[currentEmailIndex].ioc;
+        if (selectedVerdict === correctVerdict) {
+            score++;
+            resultDisplay.innerHTML = `<span class="correct">Correct! ✅</span>`;
+        } else {
+            resultDisplay.innerHTML = `<span class="incorrect">Incorrect! ❌</span>`;
+        }
+        resultDisplay.innerHTML += ` The correct verdict was **${correctVerdict}**. <br><br><strong>Why?</strong> ${iocExplanation}`;
+        verdictButtons.style.display = 'none';
+        continueBtnContainer.style.display = 'block';
+    }
+
+    function continueGame() {
+        currentEmailIndex++;
+        presentEmail();
+    }
+
+    function endGame() {
+        showScreen(gameOverScreen);
+        finalScoreSpan.textContent = score;
+        let congratsText = '';
+        if (score === emails.length) {
+            congratsText = 'Outstanding! You are a master detective! 🏆';
+        } else if (score >= emails.length / 2) {
+            congratsText = 'Great job! You\'ve got a sharp eye for a detective. 👍';
+        } else {
+            congratsText = 'Good effort! Keep practicing, and you\'ll spot those threats in no time. 💪';
+        }
+        congratsMsg.textContent = congratsText;
+    }
+
+    function startMiniChallenge() {
+        miniChallengeIndex = 0;
+        miniScore = 0;
+        miniScoreSpan.textContent = 0;
+        showScreen(miniChallengeScreen);
+        presentMiniChallengeEmail();
+    }
+
+    function presentMiniChallengeEmail() {
+        if (miniChallengeIndex < miniChallengeEmails.length) {
+            const email = miniChallengeEmails[miniChallengeIndex];
+            challengeEmailDisplay.innerHTML = `
+                <h3>Email Header ${miniChallengeIndex + 1}</h3>
+                <p><strong>From:</strong> ${email.from}</p>
+                <p><strong>Subject:</strong> ${email.subject}</p>
+                <p><strong>Received:</strong> ${email.received}</p>
+                ${email.attachment ? `<p><strong>Attachment:</strong> ${email.attachment}</p>` : ''}
+                ${email.spf ? `<p><strong>SPF:</strong> ${email.spf}</p>` : ''}
+                ${email.dkim ? `<p><strong>DKIM:</strong> ${email.dkim}</p>` : ''}
+                ${email.dmarc ? `<p><strong>DMARC:</strong> ${email.dmarc}</p>` : ''}
+                ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
+                <p style="margin-top: 15px;">**What's the red flag?**</p>
+                <p style="color: #4CAF50; display: none;" class="answer-display">**Answer:** ${email.ioc}</p>
+            `;
+            nextChallengeEmailBtn.textContent = 'Show Red Flag';
+            challengeEmailDisplay.querySelector('.answer-display').style.display = 'none';
+            nextChallengeEmailBtn.onclick = () => showRedFlag(email);
+        } else {
+            challengeEmailDisplay.innerHTML = `<h3>Challenge Complete!</h3><p>Return to the main screen to continue your learning journey.</p>`;
+            nextChallengeEmailBtn.style.display = 'none';
+        }
+    }
+
+    function showRedFlag(email) {
+        challengeEmailDisplay.querySelector('.answer-display').style.display = 'block';
+        nextChallengeEmailBtn.textContent = 'Next Email';
+        nextChallengeEmailBtn.onclick = () => {
+            miniChallengeIndex++;
+            presentMiniChallengeEmail();
+        };
+    }
+
+    // Set up event listeners
+    startGameBtn.addEventListener('click', startGame);
+    restartGameBtn.addEventListener('click', startGame);
+    verdictButtons.addEventListener('click', handleVerdict);
+    continueBtn.addEventListener('click', continueGame);
+    startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
+</script>
+
+</body>
+</html>
