@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Header Analysis 1.0</title>
+    <title>Email Header Analysis 1.1</title>
     <style>
         /* General styling for the game environment */
         body {
@@ -186,16 +186,26 @@
             background-color: #cf3d15;
             transform: translateY(-2px);
         }
+        #restart-backdoor {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            /* background-color: rgba(255, 255, 255, 0.1); */ /* Uncomment for visibility during testing */
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
 
 <div class="game-container" id="start-screen">
-    <h1>Email Header Analysis 1.0</h1>
+    <h1>Email Header Analysis 1.1</h1>
     <div class="subheader">Analyze email headers to identify threats.</div>
-    <p>Welcome, Detective! Your mission is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
+    <p>Welcome! Your task is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
     <p>Pay close attention to clues like **mismatched domains**, **suspicious IPs**, and **SPF/DKIM/DMARC results**. There are 10 emails in total. Can you get a perfect score?</p>
-    <button id="start-game">Start Mission</button>
+    <button id="start-game">Start Analysis</button>
 </div>
 
 <div class="game-container" id="game-screen" style="display: none;">
@@ -216,12 +226,12 @@
 
 <div class="game-container" id="game-over-screen" style="display: none;">
     <div id="game-over">
-        <h2>Mission Debriefing</h2>
+        <h2>Analysis Debriefing</h2>
         <p class="score-info">You correctly identified <span id="final-score">0</span> out of 10 emails.</p>
         <p id="congrats"></p>
         <div class="debrief">
             <h3>Final Notes for Your Report</h3>
-            <p>Your work is not done yet! Now, head over to the **Canvas discussion board** to collaborate with your fellow detectives.</p>
+            <p>Your work is not done yet. Now, head over to the **Canvas discussion board** to collaborate with your peers.</p>
             <p><strong>Prompts for your post:</strong></p>
             <ul>
                 <li>Which email was the most difficult to analyze? Why?</li>
@@ -247,6 +257,8 @@
         <p style="margin-top: 15px;">**Final score:** <span id="mini-score">0</span> / 5</p>
     </div>
 </div>
+
+<div id="restart-backdoor"></div>
 
 <script>
     // Our collection of email cases to investigate
@@ -400,6 +412,9 @@
     const miniContinueBtnContainer = document.getElementById('mini-continue-container');
     const miniContinueBtn = document.getElementById('mini-continue-game');
     const miniScoreSpan = document.getElementById('mini-score');
+    const restartBackdoor = document.getElementById('restart-backdoor');
+    const finalScoreKey = 'emailAnalysisFinalScore';
+    const finalCongratsKey = 'emailAnalysisCongratsMsg';
     let currentEmailIndex = 0;
     let score = 0;
     let miniChallengeIndex = 0;
@@ -484,6 +499,13 @@
         miniChallengeScreen.style.display = 'none';
         screenToShow.style.display = 'flex';
     }
+    function checkPreviousScore() {
+        const storedScore = localStorage.getItem(finalScoreKey);
+        const storedCongrats = localStorage.getItem(finalCongratsKey);
+        if (storedScore !== null) {
+            endGame(parseInt(storedScore), storedCongrats, true);
+        }
+    }
     function startGame() {
         currentEmailIndex = 0;
         score = 0;
@@ -533,18 +555,36 @@
         currentEmailIndex++;
         presentEmail();
     }
-    function endGame() {
+    function endGame(storedScore = null, storedCongrats = null, returningUser = false) {
         showScreen(gameOverScreen);
-        finalScoreSpan.textContent = score;
-        let congratsText = '';
-        if (score === emails.length) {
-            congratsText = 'Outstanding! You are a master detective! 🏆';
-        } else if (score >= emails.length / 2) {
-            congratsText = 'Great job! You\'ve got a sharp eye for a detective. 👍';
+        if (returningUser) {
+            finalScoreSpan.textContent = storedScore;
+            congratsMsg.textContent = storedCongrats;
+            document.querySelector('#game-over h2').textContent = 'Previous Session Complete';
+            document.querySelector('#game-over p').textContent = 'You have already completed this analysis. Your final score was:';
+            document.querySelector('.debrief').style.display = 'none';
+            startMiniChallengeBtn.style.display = 'none';
+            goToCanvasBtn.style.display = 'none';
         } else {
-            congratsText = 'Good effort! Keep practicing, and you\'ll spot those threats in no time. 💪';
+            let congratsText = '';
+            if (score === emails.length) {
+                congratsText = 'Outstanding! You are a master analyst! 🏆';
+            } else if (score >= emails.length / 2) {
+                congratsText = 'Great job! You\'ve got a sharp eye for a security analyst. 👍';
+            } else {
+                congratsText = 'Good effort! Keep practicing, and you\'ll spot those threats in no time. 💪';
+            }
+            finalScoreSpan.textContent = score;
+            congratsMsg.textContent = congratsText;
+            document.querySelector('#game-over h2').textContent = 'Analysis Debriefing';
+            document.querySelector('#game-over p').textContent = 'You correctly identified ' + score + ' out of 10 emails.';
+            document.querySelector('.debrief').style.display = 'block';
+            startMiniChallengeBtn.style.display = 'block';
+            goToCanvasBtn.style.display = 'block';
+            // Save the score for the next visit
+            localStorage.setItem(finalScoreKey, score);
+            localStorage.setItem(finalCongratsKey, congratsText);
         }
-        congratsMsg.textContent = congratsText;
     }
     function startMiniChallenge() {
         miniChallengeIndex = 0;
@@ -608,6 +648,11 @@
     function goToCanvas() {
         window.open(canvasUrl, '_blank');
     }
+    function restartGameBackdoor() {
+        localStorage.removeItem(finalScoreKey);
+        localStorage.removeItem(finalCongratsKey);
+        window.location.reload(); // Reload the page to start over
+    }
     // Set up event listeners
     startGameBtn.addEventListener('click', startGame);
     verdictButtons.addEventListener('click', handleVerdict);
@@ -615,6 +660,9 @@
     startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
     miniContinueBtn.addEventListener('click', handleNextMiniChallenge);
     goToCanvasBtn.addEventListener('click', goToCanvas);
+    restartBackdoor.addEventListener('click', restartGameBackdoor);
+    // On page load, check if the game has been played before
+    window.addEventListener('load', checkPreviousScore);
 </script>
 
 </body>
