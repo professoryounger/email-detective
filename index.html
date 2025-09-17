@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Header Analysis 1.2</title>
+    <title>Email Header Analysis 1.1</title>
     <style>
         /* General styling for the game environment */
         body {
@@ -265,8 +265,6 @@
     </div>
 </div>
 
-<div id="restart-backdoor"></div>
-
 <script>
     // Our collection of email cases to investigate
     const emails = [
@@ -398,6 +396,7 @@
             ioc: 'This is a **whaling attack**, a targeted phishing attempt on a high-level employee. The sender\'s domain is spoofed, and the IP address is generic and fails all authentication checks. The subject line creates a sense of urgency to bypass scrutiny.',
         },
     ];
+
     const startScreen = document.getElementById('start-screen');
     const gameScreen = document.getElementById('game-screen');
     const gameOverScreen = document.getElementById('game-over-screen');
@@ -419,7 +418,6 @@
     const miniContinueBtnContainer = document.getElementById('mini-continue-container');
     const miniContinueBtn = document.getElementById('mini-continue-game');
     const miniScoreSpan = document.getElementById('mini-score');
-    const restartBackdoor = document.getElementById('restart-backdoor');
     const finalGradeDisplay = document.getElementById('final-grade-display');
     const finalGradeContainer = document.querySelector('.final-grade');
     const finalScoreKey = 'emailAnalysisFinalScore';
@@ -429,6 +427,10 @@
     let score = 0;
     let miniChallengeIndex = 0;
     let miniScore = 0;
+    // For the keyboard-based backdoor
+    let lastKeys = '';
+    const resetKeySequence = 'pc';
+
     // >>>>>>>>> PASTE YOUR CANVAS DISCUSSION URL HERE <<<<<<<<<<<
     const canvasUrl = 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811';
     const miniChallengeEmails = [
@@ -694,14 +696,27 @@
         window.location.reload(); // Reload the page to start over
     }
 
-    // Set up event listeners
+    // New keyboard event listener for the backdoor
+    window.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        if (key === 'p' || key === 'c') {
+            lastKeys += key;
+            if (lastKeys.slice(-resetKeySequence.length) === resetKeySequence) {
+                restartGameBackdoor();
+            }
+        } else {
+            // Reset the sequence if any other key is pressed
+            lastKeys = '';
+        }
+    });
+
+    // Set up event listeners for buttons
     startGameBtn.addEventListener('click', startGame);
     verdictButtons.addEventListener('click', handleVerdict);
     continueBtn.addEventListener('click', continueGame);
     startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
     miniContinueBtn.addEventListener('click', handleNextMiniChallenge);
     goToCanvasBtn.addEventListener('click', goToCanvas);
-    restartBackdoor.addEventListener('click', restartGameBackdoor);
 
     // On page load, check if the game has been played before
     window.addEventListener('load', checkPreviousScore);
