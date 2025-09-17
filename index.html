@@ -342,7 +342,7 @@
             dkim: 'fail',
             dmarc: 'fail',
             verdict: 'Malicious',
-            ioc: 'This is a **whaling attack**, a targeted phishing attempt on a high-level employee. The sender's domain is spoofed, and the IP address is generic and fails all authentication checks. The subject line creates a sense of urgency to bypass scrutiny.',
+            ioc: 'This is a **whaling attack**, a targeted phishing attempt on a high-level employee. The sender\'s domain is spoofed, and the IP address is generic and fails all authentication checks. The subject line creates a sense of urgency to bypass scrutiny.',
         },
     ];
 
@@ -351,7 +351,6 @@
     const gameOverScreen = document.getElementById('game-over-screen');
     const miniChallengeScreen = document.getElementById('mini-challenge-screen');
     const startGameBtn = document.getElementById('start-game');
-    const restartGameBtn = document.getElementById('restart-game');
     const startMiniChallengeBtn = document.getElementById('start-mini-challenge');
     const emailDisplay = document.getElementById('email-display');
     const emailNumberSpan = document.getElementById('email-number');
@@ -501,41 +500,4 @@
             challengeEmailDisplay.innerHTML = `
                 <h3>Email Header ${miniChallengeIndex + 1}</h3>
                 <p><strong>From:</strong> ${email.from}</p>
-                <p><strong>Subject:</strong> ${email.subject}</p>
-                <p><strong>Received:</strong> ${email.received}</p>
-                ${email.attachment ? `<p><strong>Attachment:</strong> ${email.attachment}</p>` : ''}
-                ${email.spf ? `<p><strong>SPF:</strong> ${email.spf}</p>` : ''}
-                ${email.dkim ? `<p><strong>DKIM:</strong> ${email.dkim}</p>` : ''}
-                ${email.dmarc ? `<p><strong>DMARC:</strong> ${email.dmarc}</p>` : ''}
-                ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
-                <p style="margin-top: 15px;">**What's the red flag?**</p>
-                <p style="color: #4CAF50; display: none;" class="answer-display">**Answer:** ${email.ioc}</p>
-            `;
-            nextChallengeEmailBtn.textContent = 'Show Red Flag';
-            challengeEmailDisplay.querySelector('.answer-display').style.display = 'none';
-            nextChallengeEmailBtn.onclick = () => showRedFlag(email);
-        } else {
-            challengeEmailDisplay.innerHTML = `<h3>Challenge Complete!</h3><p>Return to the main screen to continue your learning journey.</p>`;
-            nextChallengeEmailBtn.style.display = 'none';
-        }
-    }
-
-    function showRedFlag(email) {
-        challengeEmailDisplay.querySelector('.answer-display').style.display = 'block';
-        nextChallengeEmailBtn.textContent = 'Next Email';
-        nextChallengeEmailBtn.onclick = () => {
-            miniChallengeIndex++;
-            presentMiniChallengeEmail();
-        };
-    }
-
-    // Set up event listeners
-    startGameBtn.addEventListener('click', startGame);
-    restartGameBtn.addEventListener('click', startGame);
-    verdictButtons.addEventListener('click', handleVerdict);
-    continueBtn.addEventListener('click', continueGame);
-    startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
-</script>
-
-</body>
-</html>
+                <p
