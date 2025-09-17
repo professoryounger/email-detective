@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Header Analysis 1.5</title>
+    <title>Email Header Analysis 1.6</title>
     <style>
         /* General styling for the game environment */
         body {
@@ -27,6 +27,9 @@
             box-sizing: border-box;
             text-align: center;
             animation: fadeIn 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
@@ -207,7 +210,7 @@
 <body>
 
 <div class="game-container" id="start-screen">
-    <h1>Email Header Analysis 1.5</h1>
+    <h1>Email Header Analysis 1.6</h1>
     <div class="subheader">Analyze email headers to identify threats.</div>
     <p>Welcome! Your task is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
     <p>Pay close attention to clues like **mismatched domains**, **suspicious IPs**, and **SPF/DKIM/DMARC results**. There are 10 emails in total. Can you get a perfect score?</p>
@@ -467,6 +470,7 @@
             from: 'jane.smith@trustedcompany.com',
             subject: 'URGENT: Invoice #98765',
             replyTo: 'jane.smith@yahoo.com',
+            received: 'undefined',
             ioc: 'The `Reply-To` address is a common personal email, which is highly unusual for a business invoice.',
             choices: [
                 'The subject line contains "URGENT."',
@@ -673,7 +677,8 @@
                 <h3>Email Header ${miniChallengeIndex + 1}</h3>
                 <p><strong>From:</strong> ${email.from}</p>
                 <p><strong>Subject:</strong> ${email.subject}</p>
-                <p><strong>Received:</strong> ${email.received}</p>
+                ${email.replyTo ? `<p><strong>Reply-To:</strong> ${email.replyTo}</p>` : ''}
+                ${email.received ? `<p><strong>Received:</strong> ${email.received}</p>` : ''}
                 ${email.attachment ? `<p><strong>Attachment:</strong> ${email.attachment}</p>` : ''}
                 ${email.spf ? `<p><strong>SPF:</strong> ${email.spf}</p>` : ''}
                 ${email.dkim ? `<p><strong>DKIM:</strong> ${email.dkim}</p>` : ''}
