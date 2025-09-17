@@ -103,6 +103,21 @@
         .verdict-buttons button.safe:hover { background-color: #45a049; }
         .verdict-buttons button.suspicious:hover { background-color: #e68a00; }
         .verdict-buttons button.malicious:hover { background-color: #d32f2f; }
+
+        /* Mini-challenge specific styles */
+        #mini-challenge-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        #mini-challenge-options button {
+            width: 100%;
+            text-align: left;
+            padding: 15px;
+        }
         
         /* Styling for the email header display area */
         #email-display {
@@ -226,9 +241,11 @@
         <h2>Mini-Challenge: Spot the Red Flag</h2>
         <p>Quickly identify the most suspicious indicator in each email header. We're on a tight schedule!</p>
         <div id="challenge-email-display"></div>
-        <input type="text" id="red-flag-input" class="red-flag-input" placeholder="Type your guess here...">
-        <button id="check-answer-btn">Check My Answer</button>
+        <div id="mini-challenge-options"></div>
         <div id="mini-result-display" style="margin-top: 10px;"></div>
+        <div class="continue-btn-container" id="mini-continue-container" style="display: none;">
+            <button id="mini-continue-game">Next Email</button>
+        </div>
         <p style="margin-top: 15px;">**Final score:** <span id="mini-score">0</span> / 5</p>
     </div>
 </div>
@@ -381,9 +398,10 @@
     const continueBtnContainer = document.querySelector('.continue-btn-container');
     const continueBtn = document.getElementById('continue-game');
     const challengeEmailDisplay = document.getElementById('challenge-email-display');
-    const redFlagInput = document.getElementById('red-flag-input');
-    const checkAnswerBtn = document.getElementById('check-answer-btn');
+    const miniChallengeOptions = document.getElementById('mini-challenge-options');
     const miniResultDisplay = document.getElementById('mini-result-display');
+    const miniContinueBtnContainer = document.getElementById('mini-continue-container');
+    const miniContinueBtn = document.getElementById('mini-continue-game');
     const miniScoreSpan = document.getElementById('mini-score');
 
     let currentEmailIndex = 0;
@@ -392,7 +410,6 @@
     let miniScore = 0;
 
     // >>>>>>>>> PASTE YOUR CANVAS DISCUSSION URL HERE <<<<<<<<<<<
-    // Example: const canvasUrl = 'https://canvas.instructure.com/courses/12345/discussion_topics/67890';
     const canvasUrl = 'YOUR_CANVAS_DISCUSSION_URL_GOES_HERE';
 
     const miniChallengeEmails = [
@@ -402,6 +419,12 @@
             subject: 'Important Update',
             received: 'from mail.malicious-server.net',
             ioc: 'typosquatting on the domain and a suspicious source server.',
+            choices: [
+                'The email claims to be from Microsoft.',
+                'It is an urgent "update."',
+                'The domain is "microsoft.co" instead of "microsoft.com".'
+            ],
+            correctIndex: 2
         },
         {
             id: 2,
@@ -410,6 +433,12 @@
             received: 'from [127.0.0.1]',
             attachment: 'statement.exe',
             ioc: 'The `.exe` attachment is the red flag, often used to hide malware.',
+            choices: [
+                'The subject line creates urgency ("Account Locked").',
+                'The attachment is an executable file (.exe).',
+                'The sender is a "no-reply" address.'
+            ],
+            correctIndex: 1
         },
         {
             id: 3,
@@ -417,6 +446,12 @@
             subject: 'URGENT: Invoice #98765',
             replyTo: 'jane.smith@yahoo.com',
             ioc: 'The `Reply-To` address is a common personal email, which is highly unusual for a business invoice.',
+            choices: [
+                'The subject line contains "URGENT."',
+                'The invoice number is too short.',
+                'The `Reply-To` address is a personal Yahoo account.'
+            ],
+            correctIndex: 2
         },
         {
             id: 4,
@@ -426,6 +461,12 @@
             dkim: 'fail',
             dmarc: 'fail',
             ioc: 'All authentication checks (SPF/DKIM/DMARC) have failed, indicating the email is a spoof.',
+            choices: [
+                'The subject line says "Payment Cancelled."',
+                'The SPF, DKIM, and DMARC authentication all failed.',
+                'The email is from "support" at a major company.'
+            ],
+            correctIndex: 1
         },
         {
             id: 5,
@@ -434,6 +475,12 @@
             received: 'from remote-server.local ([203.0.113.100])',
             body: 'Click here for details: http://bit.ly/12345',
             ioc: 'The link using a URL shortener (`bit.ly`) and the suspicious IP address are major clues.',
+            choices: [
+                'The email claims to be about "System Maintenance."',
+                'The link in the body uses a URL shortener (`bit.ly`).',
+                'The email is from the helpdesk.'
+            ],
+            correctIndex: 1
         },
     ];
 
@@ -535,30 +582,45 @@
                 ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
                 <p style="margin-top: 15px;">**What's the red flag?**</p>
             `;
-            redFlagInput.value = '';
-            redFlagInput.style.display = 'block';
-            checkAnswerBtn.style.display = 'block';
-            checkAnswerBtn.textContent = 'Check My Answer';
+            
+            miniChallengeOptions.innerHTML = ''; // Clear previous options
+            email.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.textContent = choice;
+                button.dataset.index = index;
+                button.addEventListener('click', handleMiniChallengeAnswer);
+                miniChallengeOptions.appendChild(button);
+            });
+            
             miniResultDisplay.textContent = '';
+            miniContinueBtnContainer.style.display = 'none';
         } else {
             challengeEmailDisplay.innerHTML = `<h3>Challenge Complete!</h3><p>Return to the main screen to continue your learning journey.</p>`;
-            redFlagInput.style.display = 'none';
-            checkAnswerBtn.style.display = 'none';
+            miniChallengeOptions.innerHTML = '';
+            miniContinueBtnContainer.style.display = 'none';
         }
     }
-    
-    function handleCheckAnswer() {
+
+    function handleMiniChallengeAnswer(event) {
+        const selectedIndex = parseInt(event.target.dataset.index);
         const email = miniChallengeEmails[miniChallengeIndex];
-        const userAnswer = redFlagInput.value.trim().toLowerCase();
-        const correctIoc = email.ioc.toLowerCase();
-
-        miniResultDisplay.innerHTML = `
-            <p><strong>The red flag was:</strong> ${email.ioc}</p>
-        `;
-
-        // The user can check their own answer against the correct one
-        checkAnswerBtn.textContent = 'Next Email';
-        checkAnswerBtn.onclick = handleNextMiniChallenge;
+        const correctIndex = email.correctIndex;
+        
+        if (selectedIndex === correctIndex) {
+            miniScore++;
+            miniScoreSpan.textContent = miniScore;
+            miniResultDisplay.innerHTML = `<span class="correct">Correct! ✅</span>`;
+        } else {
+            miniResultDisplay.innerHTML = `<span class="incorrect">Incorrect! ❌</span>`;
+        }
+        
+        miniResultDisplay.innerHTML += ` <br><br><strong>Why?</strong> ${email.ioc}`;
+        
+        // Disable all buttons to prevent multiple clicks
+        const allButtons = miniChallengeOptions.querySelectorAll('button');
+        allButtons.forEach(button => button.disabled = true);
+        
+        miniContinueBtnContainer.style.display = 'block';
     }
 
     function handleNextMiniChallenge() {
@@ -567,7 +629,7 @@
     }
 
     function goToCanvas() {
-        if (canvasUrl && canvasUrl !== 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811?module_item_id=1766087') {
+        if (canvasUrl && canvasUrl !== 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811') {
             window.open(canvasUrl, '_blank');
         } else {
             alert('Please configure the Canvas URL in the code first!');
@@ -579,7 +641,7 @@
     verdictButtons.addEventListener('click', handleVerdict);
     continueBtn.addEventListener('click', continueGame);
     startMiniChallengeBtn.addEventListener('click', startMiniChallenge);
-    checkAnswerBtn.addEventListener('click', handleCheckAnswer);
+    miniContinueBtn.addEventListener('click', handleNextMiniChallenge);
     goToCanvasBtn.addEventListener('click', goToCanvas);
 </script>
 
