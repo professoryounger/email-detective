@@ -103,7 +103,6 @@
         .verdict-buttons button.safe:hover { background-color: #45a049; }
         .verdict-buttons button.suspicious:hover { background-color: #e68a00; }
         .verdict-buttons button.malicious:hover { background-color: #d32f2f; }
-
         /* Mini-challenge specific styles */
         #mini-challenge-options {
             display: flex;
@@ -118,7 +117,6 @@
             text-align: left;
             padding: 15px;
         }
-        
         /* Styling for the email header display area */
         #email-display {
             background-color: #1c1c2e;
@@ -403,15 +401,12 @@
     const miniContinueBtnContainer = document.getElementById('mini-continue-container');
     const miniContinueBtn = document.getElementById('mini-continue-game');
     const miniScoreSpan = document.getElementById('mini-score');
-
     let currentEmailIndex = 0;
     let score = 0;
     let miniChallengeIndex = 0;
     let miniScore = 0;
-
     // >>>>>>>>> PASTE YOUR CANVAS DISCUSSION URL HERE <<<<<<<<<<<
     const canvasUrl = 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811';
-
     const miniChallengeEmails = [
         {
             id: 1,
@@ -483,7 +478,6 @@
             correctIndex: 1
         },
     ];
-
     function showScreen(screenToShow) {
         startScreen.style.display = 'none';
         gameScreen.style.display = 'none';
@@ -491,14 +485,12 @@
         miniChallengeScreen.style.display = 'none';
         screenToShow.style.display = 'flex';
     }
-
     function startGame() {
         currentEmailIndex = 0;
         score = 0;
         showScreen(gameScreen);
         presentEmail();
     }
-
     function presentEmail() {
         if (currentEmailIndex < emails.length) {
             const email = emails[currentEmailIndex];
@@ -523,7 +515,6 @@
             endGame();
         }
     }
-
     function handleVerdict(event) {
         if (!event.target.dataset.verdict) return;
         const selectedVerdict = event.target.dataset.verdict;
@@ -539,12 +530,10 @@
         verdictButtons.style.display = 'none';
         continueBtnContainer.style.display = 'block';
     }
-
     function continueGame() {
         currentEmailIndex++;
         presentEmail();
     }
-
     function endGame() {
         showScreen(gameOverScreen);
         finalScoreSpan.textContent = score;
@@ -558,7 +547,6 @@
         }
         congratsMsg.textContent = congratsText;
     }
-
     function startMiniChallenge() {
         miniChallengeIndex = 0;
         miniScore = 0;
@@ -566,7 +554,6 @@
         showScreen(miniChallengeScreen);
         presentMiniChallengeEmail();
     }
-
     function presentMiniChallengeEmail() {
         if (miniChallengeIndex < miniChallengeEmails.length) {
             const email = miniChallengeEmails[miniChallengeIndex];
@@ -582,7 +569,6 @@
                 ${email.body ? `<p><strong>Body:</strong> ${email.body}</p>` : ''}
                 <p style="margin-top: 15px;">**What's the red flag?**</p>
             `;
-            
             miniChallengeOptions.innerHTML = ''; // Clear previous options
             email.choices.forEach((choice, index) => {
                 const button = document.createElement('button');
@@ -591,7 +577,6 @@
                 button.addEventListener('click', handleMiniChallengeAnswer);
                 miniChallengeOptions.appendChild(button);
             });
-            
             miniResultDisplay.textContent = '';
             miniContinueBtnContainer.style.display = 'none';
         } else {
@@ -600,12 +585,10 @@
             miniContinueBtnContainer.style.display = 'none';
         }
     }
-
     function handleMiniChallengeAnswer(event) {
         const selectedIndex = parseInt(event.target.dataset.index);
         const email = miniChallengeEmails[miniChallengeIndex];
         const correctIndex = email.correctIndex;
-        
         if (selectedIndex === correctIndex) {
             miniScore++;
             miniScoreSpan.textContent = miniScore;
@@ -613,29 +596,19 @@
         } else {
             miniResultDisplay.innerHTML = `<span class="incorrect">Incorrect! ❌</span>`;
         }
-        
         miniResultDisplay.innerHTML += ` <br><br><strong>Why?</strong> ${email.ioc}`;
-        
         // Disable all buttons to prevent multiple clicks
         const allButtons = miniChallengeOptions.querySelectorAll('button');
         allButtons.forEach(button => button.disabled = true);
-        
         miniContinueBtnContainer.style.display = 'block';
     }
-
     function handleNextMiniChallenge() {
         miniChallengeIndex++;
         presentMiniChallengeEmail();
     }
-
     function goToCanvas() {
-        if (canvasUrl && canvasUrl !== 'https://canvas.olivet.edu/courses/36673/discussion_topics/571811') {
-            window.open(canvasUrl, '_blank');
-        } else {
-            alert('Please configure the Canvas URL in the code first!');
-        }
+        window.open(canvasUrl, '_blank');
     }
-
     // Set up event listeners
     startGameBtn.addEventListener('click', startGame);
     verdictButtons.addEventListener('click', handleVerdict);
