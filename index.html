@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Detective Challenge</title>
+    <title>Email Header Analysis 1.0</title>
     <style>
         /* General styling for the game environment */
         body {
@@ -191,7 +191,7 @@
 <body>
 
 <div class="game-container" id="start-screen">
-    <h1>Email Detective Challenge</h1>
+    <h1>Email Header Analysis 1.0</h1>
     <div class="subheader">Analyze email headers to identify threats.</div>
     <p>Welcome, Detective! Your mission is to analyze a series of email headers and determine if they are **Safe**, **Suspicious**, or **Malicious**.</p>
     <p>Pay close attention to clues like **mismatched domains**, **suspicious IPs**, and **SPF/DKIM/DMARC results**. There are 10 emails in total. Can you get a perfect score?</p>
@@ -379,7 +379,6 @@
             ioc: 'This is a **whaling attack**, a targeted phishing attempt on a high-level employee. The sender\'s domain is spoofed, and the IP address is generic and fails all authentication checks. The subject line creates a sense of urgency to bypass scrutiny.',
         },
     ];
-
     const startScreen = document.getElementById('start-screen');
     const gameScreen = document.getElementById('game-screen');
     const gameOverScreen = document.getElementById('game-over-screen');
